@@ -14,7 +14,7 @@ def deploy():
     """ DEPLOYS """
     try:
         archive_path = do_pack()
-    except:
+    except Exception:
         return False
 
     return do_deploy(archive_path)
@@ -29,7 +29,7 @@ def do_pack():
         archive_path = 'versions/web_static_{}.tgz'.format(t.strftime(f))
         local('tar -cvzf {} web_static'.format(archive_path))
         return archive_path
-    except:
+    except Exception:
         return None
 
 
@@ -59,5 +59,5 @@ def do_deploy(archive_path):
         run("ln -s {} /data/web_static/current".format(releases_path))
         print("New version deployed!")
         return True
-    except:
+    except Exception:
         return False
