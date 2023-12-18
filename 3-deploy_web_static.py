@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" eploy files to remote server using Fabric """
+""" Deploy files to remote server using Fabric """
 from datetime import datetime
 from fabric.api import *
 import os
@@ -11,10 +11,13 @@ env.user = "ubuntu"
 
 
 def deploy():
-    """ DEPLOYS """
+    """ Deploys """
     try:
         archive_path = do_pack()
-    except Exception:
+        if not archive_path:
+            return False
+    except Exception as e:
+        print(e)
         return False
 
     return do_deploy(archive_path)
@@ -29,27 +32,23 @@ def do_pack():
         archive_path = 'versions/web_static_{}.tgz'.format(t.strftime(f))
         local('tar -cvzf {} web_static'.format(archive_path))
         return archive_path
-    except Exception:
+    except Exception as e:
+        print(e)
         return None
 
 
 def do_deploy(archive_path):
-    """ Upload achive to web servers """
+    """ Upload archive to web servers """
     if not os.path.exists(archive_path):
         return False
     try:
-        name = archive_path.replace('/', ' ')
-        name = shlex.split(name)
-        name = name[-1]
-
-        vname = name.replace('.', ' ')
-        vname = shlex.split(vname)
-        vname = vname[0]
+        name = os.path.basename(archive_path)
+        vname = name.split('.')[0]
 
         releases_path = "/data/web_static/releases/{}/".format(vname)
         tmp_path = "/tmp/{}".format(name)
 
-        put(archive_path, "/tmp/")
+        put(archive_path, tmp_path)
         run("mkdir -p {}".format(releases_path))
         run("tar -xzf {} -C {}".format(tmp_path, releases_path))
         run("rm {}".format(tmp_path))
@@ -59,5 +58,6 @@ def do_deploy(archive_path):
         run("ln -s {} /data/web_static/current".format(releases_path))
         print("New version deployed!")
         return True
-    except Exception:
+    except Exception as e:
+        print(e)
         return False
